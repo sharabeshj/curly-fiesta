@@ -13,7 +13,8 @@ export default class Home extends Component {
 			typeOptions : ["movie","series","episode"],
 			type : '',
 			page : 2,
-			data : []
+			data : [],
+			error : ''
 		};
 		this.handleSubmit = this.handleSubmit.bind(this);
 		this.handleClear = this.handleClear.bind(this);
@@ -49,7 +50,7 @@ export default class Home extends Component {
 		axios.get('http://www.omdbapi.com/?apikey=b1d06d27&s='+formPayload.s+'&y='+formPayload.y+'&type='+formPayload.type)
 			.then(res => {
 				console.log(res.data);
-				this.setState({ data : res.data.Search });
+				this.setState({ data : res.data.Search,error : res.data.Error });
 			})
 			.catch(e => console.log(e));		
 	}
@@ -58,6 +59,9 @@ export default class Home extends Component {
 			var searchNodes = this.state.data.map(function(item){
 				return <li key = { item.imdbID }><img src = { item.Poster } alt = { item.Title }/><h4><Link to = {`/detail/${ item.imdbID }`}>{ item.Title }</Link></h4><p>type : { item.Type } year : { item.Year }</p></li>
 			})
+		}
+		if(this.state.error){
+			var error = <p> No movie found!! </p>
 		}
 		return(
 			<div>
@@ -90,6 +94,7 @@ export default class Home extends Component {
 				<button onClick = { this.handleClear }>Clear</button>
 			</form>
 			<div>
+				{ error }
 				<ul>
 				{ searchNodes }
 				</ul>
