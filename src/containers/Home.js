@@ -1,95 +1,43 @@
 import React,{ Component } from 'react';
-import SingleInput from '../components/SingleInput';
-import Select from '../components/Select';
 import axios from 'axios';
+import { Link } from 'react-router-dom';
 
-export default class Home extends Component {
+export default class Home extends Component{
 	constructor(props){
 		super(props);
 		this.state = {
-			title : '',
-			year :  0,
-			typeOptions : ["movie","series","episode"],
-			type : '',
-			page : 2,
 			data : []
-		};
-		this.handleSubmit = this.handleSubmit.bind(this);
-		this.handleClear = this.handleClear.bind(this);
-		this.handleTitle = this.handleTitle.bind(this);
-		this.handleYear = this.handleYear.bind(this);
-		this.handleType = this.handleType.bind(this);
+		}
 	}
-	handleTitle(e){
-		this.setState({ title : e.target.value });
+	componentDidMount(){
+		this.loadSearches();
 	}
-	handleYear(e){
-		this.setState({ year : e.target.value });
-	}
-	handleType(e){
-		this.setState({ type : e.target.value });
-	}
-	handleClear(e){
-		e.preventDefault();
-		this.setState({
-			title : '',
-			year : 0,
-			type : []
-		})
-	}
-	handleSubmit(e){
-		e.preventDefault();
-
-		const formPayload = {
-			s : this.state.title,
-			y : this.state.year,
-			type : this.state.type
-		};
-		axios.get('http://www.omdbapi.com/?apikey=b1d06d27&s='+formPayload.s+'&y='+formPayload.y+'&type='+formPayload.type)
-			.then(res => this.setState({ data : res.data.Search }))
-			.catch(e => console.log(e));		
+	loadSearches(){
+		var count = 1;
+		var storedResults = JSON.parse(localStorage.getItem("prevRes"));
+		if(storedResults){
+			var arrLength = storedResults.length;
+				while (count<=6){
+					axios.get(storedResults[arrLength])
+						.then(res => this.state.data.push(res.data))
+						.catch(e => console.log(e));
+					arrLength--;
+					count++;
+				}
+			}
 	}
 	render(){
 		if(this.state.data){
-			var searchNodes = this.state.data.map(function(item){
-				return <li key = { item.imdbID }><img src = { item.Poster } alt = { item.Title }/><h4>{ item.Title }</h4><p>type : { item.Type } year : { item.Year }</p></li>
-			})
+			var searchNodes = this.state.data.map(function(search){
+				return <li key = { search.imdbID }><img src = { search.Poster } alt = { search.Title }/><h4><Link to = {`/detail/${ search.imdbID }`}>{ search.Title }</Link></h4><p>type : { search.Type } year : { search.Year }</p></li>
+			});
 		}
-		return(
+		return (
 			<div>
-			<form onSubmit = { this.handleSubmit }>
-				<h3>Search</h3>
-				<SingleInput 
-					inputType = { 'text' }
-					title = { 'Title' }
-					name = { 'title' }
-					controlFunc = { this.handleTitle }
-					content = { this.state.title }
-					placeholder = { 'Enter the title' }
-					/>
-				<SingleInput 
-					inputType = { 'number' }
-					title = { 'Year' }
-					name = { 'year' }
-					controlFunc = { this.handleYear }
-					content = { this.state.year }
-					placeholder = { 'Enter year' }
-				/>
-				<Select 
-					name = { 'type' }
-					placeholder = { 'Choose type' }
-					controlFunc = { this.handleType }
-					options = { this.state.typeOptions }
-					selectedOptions = { this.state.type }
-				/>
-				<input type = "submit" value = "search" />
-				<button onClick = { this.handleClear }>Clear</button>
-			</form>
-			<div>
+				<p>Your past searches</p>
 				<ul>
-				{ searchNodes }
+					{ searchNodes }
 				</ul>
-			</div>
 			</div>
 			)
 	}
